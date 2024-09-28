@@ -15,7 +15,7 @@ This needs to be run once before configuring anything else. There are two values
 This will go in the on-up section of the PPPoE Profile in the Scripts tab. There are three values to tweak here. The first is the IP Address array `PublicAddresses` which is the addresses that are set aside for mapping the clients to. Usually you will want these as setup on a loopback interface, which is just a bridge that has no ports assigned to it. If you have more than a few of these, you will likely want to look into a proper appliance for CGNATing. The second is the integer value in `startport` which is recommended to be 1025 and cannot go higher than 65535. The final is the integer value `numberOfPorts` which is the number of ports assigned to each client. You can get this value by taking (65535 - `startport`) and then divide by the number of clients you want per Public Address. The default values of 1025 for `startport` and 2000 for `numberOfPorts` will give you a ratio of 32:1 clients to public IPs.
 ```
 ######## Customize These Variables #########
-:local PublicAddresses {1.1.1.1, 2.2.2.2, 3.3.3.3}
+:local PublicAddresses {1.1.1.1;2.2.2.2;3.3.3.3}
 :local startport 1025
 :local numberOfPorts 2000
 ####################################
@@ -32,7 +32,7 @@ This will go in the on-up section of the PPPoE Profile in the Scripts tab. There
     :if (!$success) do={
       :set currentport $startport
       :while (($currentport <= (65535 - $numberOfPorts)) && !$success) do={
-        :if ([:len [/ip firewall nat find where to-addresses=$PublicAddress to-ports="$currentport-$($currentport + $numberOfPorts)"]] = 0) do={
+        :if ([:len [/ip firewall nat find where to-addresses=$PublicAddress to-ports="$currentport-$($currentport + $numberOfPorts - 1)"]] = 0) do={
           :set success true
           :set foundport $currentport
           :set foundaddress $PublicAddress
@@ -47,8 +47,8 @@ This will go in the on-up section of the PPPoE Profile in the Scripts tab. There
   /ip firewall nat add chain=clients action=jump jump-target="$user" src-address=$"remote-address" comment=$user
   
   # Translation rules
-  /ip firewall nat add chain="$user" action=src-nat protocol=tcp src-address=$"remote-address" to-addresses=$foundaddress to-ports="$foundport-$($foundport + $numberOfPorts)" comment=$user
-  /ip firewall nat add chain="$user" action=src-nat protocol=udp src-address=$"remote-address" to-addresses=$foundaddress to-ports="$foundport-$($foundport + $numberOfPorts)" comment=$user
+  /ip firewall nat add chain="$user" action=src-nat protocol=tcp src-address=$"remote-address" to-addresses=$foundaddress to-ports="$foundport-$($foundport + $numberOfPorts - 1)" comment=$user
+  /ip firewall nat add chain="$user" action=src-nat protocol=udp src-address=$"remote-address" to-addresses=$foundaddress to-ports="$foundport-$($foundport + $numberOfPorts - 1)" comment=$user
   /ip firewall nat add chain="$user" action=src-nat protocol=icmp src-address=$"remote-address" to-addresses=$foundaddress comment=$user
 }
 ```
