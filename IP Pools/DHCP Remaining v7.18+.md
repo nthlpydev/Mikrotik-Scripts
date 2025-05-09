@@ -7,39 +7,39 @@ This script will return the number of IPs remaining in an IP pool or group of IP
 :local poolprefix "DHCP"
 ####################################
 /ip pool {
-	:local poolname
-	:local pooladdresses
-	:local poolused
-	:local totaladdresses
-	:local totalused
-	:local line
+  :local poolname
+  :local pooladdresses
+  :local poolused
+  :local totaladdresses
+  :local totalused
+  :local line
   :set totaladdresses 0
-	:set totalused 0
+  :set totalused 0
 
-	:foreach pool in=[find where name~$poolprefix] do={
-		:set pooladdresses [get $pool total]
+  :foreach pool in=[find where name~$poolprefix] do={
+    :set pooladdresses [get $pool total]
     :set poolused [get $pool used]
     :set totalused ($totalused + $poolused)
     :set totaladdresses ($totaladdresses + $pooladdresses)
   }
-	:set poolremaining ($totaladdresses - $totalused)
-    :set line ("DHCP Utilization:")
-    :set line ([:tostr $line] . "  [" . $totalused . "/" . $totaladdresses . "] - " . $poolremaining . " Free IPs Remaining")
-    :if ( [:tonum $poolremaining] < $criticalthreshold ) do={
-         :log error ("The DHCP Pool has " . $poolremaining . " addresses free.")
-         :log info message=($line)
+  :set poolremaining ($totaladdresses - $totalused)
+  :set line ("DHCP Utilization:")
+  :set line ([:tostr $line] . "  [" . $totalused . "/" . $totaladdresses . "] - " . $poolremaining . " Free IPs Remaining")
+  :if ( [:tonum $poolremaining] < $criticalthreshold ) do={
+    :log error ("The DHCP Pool has " . $poolremaining . " addresses free.")
+    :log info message=($line)
     } else={
-		:if ( [:tonum $poolremaining] < $errorthreshold ) do={
-            :log warning ("The DHCP Pool has " . $poolremaining . " addresses free.")
-            :log info message=($line)
-		} else={
-			:if ( [:tonum $poolremaining] < $warnthreshold ) do={
-				:log info ("The DHCP Pool has " . $poolremaining . " addresses free.")
-				:log info message=($line)
-			} else={
-				:log info message=($line)
-			}
-		}
-	}
+      :if ( [:tonum $poolremaining] < $errorthreshold ) do={
+        :log warning ("The DHCP Pool has " . $poolremaining . " addresses free.")
+        :log info message=($line)
+    } else={
+    :if ( [:tonum $poolremaining] < $warnthreshold ) do={
+        :log info ("The DHCP Pool has " . $poolremaining . " addresses free.")
+        :log info message=($line)
+      } else={
+        :log info message=($line)
+      }
+    }
+  }
 }
 ```
